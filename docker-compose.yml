@@ -5,7 +5,7 @@ services:
             context: docker/php
             dockerfile: php.dockerfile
         volumes:
-            - "./:/app"
+            - "./:/var/www/html"
         networks:
             - ychanter
 
