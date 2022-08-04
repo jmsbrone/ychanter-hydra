@@ -1,5 +1,7 @@
 <?php
 
+include_once __DIR__ . '/bootstrap.php';
+
 $config = [
     'id' => 'basic-console',
     'basePath' => dirname(__DIR__),
