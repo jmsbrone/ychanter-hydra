@@ -1,5 +1,5 @@
 {
-    "name": "ychanter/yc_service_control-hub-server",
+    "name": "ychanter/hydra",
     "description": "Control hub backend for YChanter system",
     "type": "project",
     "license": "UNLICENSED",
