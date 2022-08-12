@@ -2,19 +2,22 @@
 
 namespace tests\unit;
 
-use app\common\models\SubsystemModulePrototype;
-use app\common\models\SubsystemModuleVersionPrototype;
+use app\common\models\SubsystemModule;
+use app\common\models\SubsystemModuleVersion;
 use app\core\api\HubAPI;
 use app\core\services\HubControlService;
-use app\core\spi\prototypes\SubsystemManagerAPI;
+use app\core\spi\SubsystemManagerAPI;
 use Codeception\Test\Unit;
+use Exception;
 use PharIo\Version\UnsupportedVersionConstraintException;
+use PHPUnit\Framework\MockObject\MockObject;
+use UnitTester;
 use yii\helpers\ArrayHelper;
 
 class HubServiceTest extends Unit
 {
     /**
-     * @var \UnitTester
+     * @var UnitTester
      */
     protected $tester;
 
@@ -39,10 +42,36 @@ class HubServiceTest extends Unit
 
             foreach ($systemModule->subsystemModules as $subsystemModule) {
                 $this->assertEquals($subsystemModule->moduleId, $systemModule->moduleId);
-                $this->assertNotEmpty($subsystemModule->getSubsystemID());
+                $this->assertNotEmpty($subsystemModule->subsystemId);
                 if ($subsystemModule->installed) {
-                    $this->assertNotEmpty($subsystemModule->installedVersion);
+                    $this->assertNotEmpty($subsystemModule->version);
                 }
+            }
+        }
+    }
+
+    /**
+     * @param array $list
+     * @return void
+     */
+    protected function debugPrintSystemList(array $list): void
+    {
+        if (empty($list)) {
+            codecept_debug('>>>> list is empty <<<<<');
+        }
+        foreach ($list as $systemModule) {
+            codecept_debug('---------------------------------------');
+            codecept_debug("> System module - " . $systemModule->moduleId);
+
+            foreach ($systemModule->subsystemModules as $subsystemModule) {
+                codecept_debug('>> ' .
+                    join(', ', [
+                        'subsystem - ' . $subsystemModule->subsystemId,
+                        'module ID - ' . $subsystemModule->moduleId,
+                        $subsystemModule->installed ? ('installed (' . $subsystemModule->version . ')') : 'not installed',
+                        $subsystemModule->active ? 'active' : 'not active',
+                    ])
+                );
             }
         }
     }
@@ -167,21 +196,21 @@ class HubServiceTest extends Unit
     }
 
     /**
-     * @return SubsystemManagerAPI|\PHPUnit\Framework\MockObject\MockObject
-     * @throws \Exception
+     * @return SubsystemManagerAPI|MockObject
+     * @throws Exception
      */
-    protected function createSubsystemServer1(): \PHPUnit\Framework\MockObject\MockObject|SubsystemManagerAPI
+    protected function createSubsystemServer1(): MockObject|SubsystemManagerAPI
     {
         $subsystemID = 'server-1';
 
-        $module1 = $this->make(SubsystemModulePrototype::class, ['getSubsystemID' => $subsystemID]);
+        $module1 = $this->make(SubsystemModule::class, ['subsystemId' => $subsystemID]);
         $module1->moduleId = 'test.serverModule1';
         $module1->name = "serverModule1";
         $module1->vendor = "test";
         $module1->title = "Server module #1";
         $module1->description = "Test module #1, only meant for server service";
 
-        $module2 = $this->make(SubsystemModulePrototype::class, ['getSubsystemID' => $subsystemID]);
+        $module2 = $this->make(SubsystemModule::class, ['subsystemId' => $subsystemID]);
         $module2->moduleId = 'test.serverClientModule2';
         $module2->name = "serverClientModule2";
         $module2->vendor = "test";
@@ -233,28 +262,28 @@ class HubServiceTest extends Unit
     }
 
     /**
-     * @return SubsystemManagerAPI|\PHPUnit\Framework\MockObject\MockObject
-     * @throws \Exception
+     * @return SubsystemManagerAPI|MockObject
+     * @throws Exception
      */
-    protected function createSubsystemClient1(): \PHPUnit\Framework\MockObject\MockObject|SubsystemManagerAPI
+    protected function createSubsystemClient1(): MockObject|SubsystemManagerAPI
     {
         $subsystemID = 'client-1';
 
-        $module1 = $this->make(SubsystemModulePrototype::class, ['getSubsystemID' => $subsystemID]);
+        $module1 = $this->make(SubsystemModule::class, ['subsystemId' => $subsystemID]);
         $module1->moduleId = 'test.clientModule1';
         $module1->name = "clientModule1";
         $module1->vendor = "test";
         $module1->title = "Client module #1";
         $module1->description = "Test module #1, only meant for client service";
 
-        $module2 = $this->make(SubsystemModulePrototype::class, ['getSubsystemID' => $subsystemID]);
+        $module2 = $this->make(SubsystemModule::class, ['subsystemId' => $subsystemID]);
         $module2->moduleId = 'test.serverClientModule2';
         $module2->name = "serverClientModule2";
         $module2->vendor = "test";
         $module2->title = "Client module #2";
         $module2->description = "Test module #2 (server and client) - client module";
 
-        $module3 = $this->make(SubsystemModulePrototype::class, ['getSubsystemID' => $subsystemID]);
+        $module3 = $this->make(SubsystemModule::class, ['subsystemId' => $subsystemID]);
         $module3->moduleId = 'test.clientModule3';
         $module3->name = "clientModule3";
         $module3->vendor = "test";
@@ -262,7 +291,7 @@ class HubServiceTest extends Unit
         $module3->description = "Test module #3, pre-installed and active";
         $module3->active = true;
         $module3->installed = true;
-        $module3->installedVersion = '1.2.9';
+        $module3->version = '1.2.9';
 
         $modules = [$module1, $module2, $module3];
 
@@ -330,8 +359,9 @@ class HubServiceTest extends Unit
 
                 $versions = [];
                 foreach ($versionsMap[$moduleId] as $versionInfo) {
-                    $version = $this->make(SubsystemModuleVersionPrototype::class, ['getSubsystemID' => $subsystemId]);
-                    $version->moduleId = $moduleId;
+                    $version = $this->make(SubsystemModuleVersion::class, [
+                        'moduleId' => $moduleId,
+                    ]);
                     foreach ($versionInfo as $attr => $value) {
                         $version->$attr = $value;
                     }
@@ -368,7 +398,7 @@ class HubServiceTest extends Unit
                 foreach ($modules as $module) {
                     if ($module->moduleId == $moduleId) {
                         $module->installed = true;
-                        $module->installedVersion = $versionConstraint;
+                        $module->version = $versionConstraint;
                     }
                 }
             },
@@ -381,31 +411,5 @@ class HubServiceTest extends Unit
             },
             'getVersion' => '1.9.2',
         ];
-    }
-
-    /**
-     * @param array $list
-     * @return void
-     */
-    protected function debugPrintSystemList(array $list): void
-    {
-        if (empty($list)) {
-            codecept_debug('>>>> list is empty <<<<<');
-        }
-        foreach ($list as $systemModule) {
-            codecept_debug('---------------------------------------');
-            codecept_debug("> System module - " . $systemModule->moduleId);
-
-            foreach ($systemModule->subsystemModules as $subsystemModule) {
-                codecept_debug('>> ' .
-                    join(', ', [
-                        'subsystem - ' . $subsystemModule->getSubsystemID(),
-                        'module ID - ' . $subsystemModule->moduleId,
-                        $subsystemModule->installed ? ('installed (' . $subsystemModule->installedVersion . ')') : 'not installed',
-                        $subsystemModule->active ? 'active' : 'not active',
-                    ])
-                );
-            }
-        }
     }
 }

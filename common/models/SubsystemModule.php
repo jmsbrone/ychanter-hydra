@@ -3,11 +3,12 @@
 namespace app\common\models;
 
 use app\common\traits\GenericModuleInfo;
+use yii\base\Model;
 
 /**
- * Prototype for module information.
+ * Module information entity.
  */
-abstract class SubsystemModulePrototype
+class SubsystemModule extends Model
 {
     use GenericModuleInfo;
 
@@ -16,12 +17,7 @@ abstract class SubsystemModulePrototype
     /** @var bool Whether the module is active in the subsystem */
     public bool $active = false;
     /** @var string|null If module is installed must contain the installed version */
-    public ?string $installedVersion = null;
-
-    /**
-     * Returns ID of the subsystem this module is meant for.
-     *
-     * @return string
-     */
-    abstract public function getSubsystemID(): string;
+    public ?string $version = null;
+    /** @var string ID of the subsystem this module belongs to */
+    public string $subsystemId;
 }

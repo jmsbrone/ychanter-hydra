@@ -11,7 +11,7 @@ class SystemModule
 {
     use GenericModuleInfo;
 
-    /** @var SubsystemModulePrototype[] Included modules for the subsystems */
+    /** @var SubsystemModule[] Included modules for the subsystems */
     public array $subsystemModules = [];
 
     /**

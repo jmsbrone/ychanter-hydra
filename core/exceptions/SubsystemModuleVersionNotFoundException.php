@@ -2,12 +2,15 @@
 
 namespace app\core\exceptions;
 
+use Exception;
+use Throwable;
+
 /**
  * Exception to specify that available version of a subsystem module was not found.
  */
-class SubsystemModuleVersionNotFoundException extends \Exception
+class SubsystemModuleVersionNotFoundException extends Exception
 {
-    public function __construct(string $moduleId, string $subsystemID, ?\Throwable $previous = null)
+    public function __construct(string $moduleId, string $subsystemID, ?Throwable $previous = null)
     {
         $errorMessage = "Suitable module version of $moduleId is not found for service '$subsystemID'";
 

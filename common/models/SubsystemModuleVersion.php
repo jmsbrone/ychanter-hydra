@@ -2,10 +2,12 @@
 
 namespace app\common\models;
 
+use yii\base\BaseObject;
+
 /**
  * Prototype for a module version for any subsystem.
  */
-abstract class SubsystemModuleVersionPrototype
+class SubsystemModuleVersion extends BaseObject
 {
     /** @var string Module ID */
     public string $moduleId;
@@ -21,11 +23,4 @@ abstract class SubsystemModuleVersionPrototype
 
     /** @var string System version dependency */
     public string $systemVersion;
-
-    /**
-     * Returns ID of the subsystem this module is meant for.
-     *
-     * @return string
-     */
-    abstract public function getSubsystemID(): string;
 }

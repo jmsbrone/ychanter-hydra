@@ -1,23 +1,22 @@
 <?php
 
-namespace app\core\spi\prototypes;
+namespace app\core\spi;
 
+use app\common\models\SubsystemModule;
+use app\common\models\SubsystemModuleVersion;
 use app\core\exceptions\ModuleActivationFailureException;
 use app\core\exceptions\SubsystemNonResponsiveException;
 
 /**
  * Generic API for any subsystem.
  * Contains all actions that can be performed with any subsystem.
- *
- * @template V of \app\common\models\SubsystemModuleVersionPrototype
- * @template M of \app\common\models\SubsystemModulePrototype
  */
 interface SubsystemManagerAPI
 {
     /**
      * Returns all available modules for the subsystem.
      *
-     * @return M[]
+     * @return SubsystemModule[]
      *
      * @throws SubsystemNonResponsiveException if subsystem does not respond to API request
      */
@@ -27,7 +26,7 @@ interface SubsystemManagerAPI
      * Returns all available module version for the subsystem.
      *
      * @param string $moduleId Module ID to load versions for
-     * @return V[]
+     * @return SubsystemModuleVersion[]
      *
      * @throws SubsystemNonResponsiveException if subsystem does not respond to API request
      */
@@ -36,7 +35,7 @@ interface SubsystemManagerAPI
     /**
      * Returns only installed modules list.
      *
-     * @return M[]
+     * @return SubsystemModule[]
      */
     public function getInstalledModules(): array;
 
@@ -45,7 +44,7 @@ interface SubsystemManagerAPI
      *
      * @return string
      */
-    public function getSubsystemID(): string;
+    public function getSubsystemId(): string;
 
     /**
      * Returns current subsystem version.

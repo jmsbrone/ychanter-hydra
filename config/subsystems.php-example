@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * Definitions for subsystems that will be controlled.
+ *
+ * Structure of each element:
+ *  [
+ *      'subsystemUrl' => 'http://reachable_subsystem_url',
+ *      'login' => 'Hydra user login for the subsystem',
+ *      'password' => 'Hydra user password for the subsystem',
+ *  ]
+ */
+
+return [
+    [
+        'subsystemUrl' => 'http://project1_nginx_1',
+        'login' => 'login',
+        'password' => 'password',
+    ],
+    [
+        'subsystemUrl' => 'https://subsystem2.public.com',
+        'login' => 'login2',
+        'password' => 'password2',
+    ],
+];

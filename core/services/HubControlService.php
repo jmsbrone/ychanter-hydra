@@ -3,30 +3,26 @@
 namespace app\core\services;
 
 use app\common\helpers\VersionHelper;
-use app\common\models\SubsystemModuleVersionPrototype;
+use app\common\models\SubsystemModuleVersion;
 use app\common\models\SystemModule;
 use app\common\traits\GenericModuleInfo;
 use app\core\api\HubAPI;
 use app\core\exceptions\SubsystemModuleVersionNotFoundException;
 use app\core\exceptions\SubsystemNonResponsiveException;
-use app\core\spi\prototypes\SubsystemManagerAPI;
+use app\core\spi\SubsystemManagerAPI;
+use Exception;
 use yii\helpers\ArrayHelper;
 
 class HubControlService implements HubAPI
 {
     /**
-     * @var SubsystemManagerAPI[] $subsystems Controlled subsystems
+     * @param SubsystemManagerAPI[] $subsystems Controlled subsystems
      * Must be a map between subsystem ID and its API instance
      */
-    protected readonly array $subsystems;
-
-    /**
-     * @param SubsystemManagerAPI[] $subsystems Controlled subsystems
-     */
     public function __construct(
-        array $subsystems
+        protected array $subsystems
     ) {
-        $this->subsystems = ArrayHelper::index($subsystems, fn($s) => $s->getSubsystemID());
+        $this->subsystems = ArrayHelper::index($this->subsystems, fn($subsystem) => $subsystem->getSubsystemId());
     }
 
     /**
@@ -88,7 +84,7 @@ class HubControlService implements HubAPI
     public function upgradeModule(string $moduleId, string $versionConstraint = '*'): void
     {
         // TODO implement module upgrade
-        throw new \Exception('Not implemented');
+        throw new Exception('Not implemented');
     }
 
     /**
@@ -97,7 +93,7 @@ class HubControlService implements HubAPI
     public function downgradeModule(string $moduleId, string $versionConstraint): void
     {
         // TODO implement module downgrade
-        throw new \Exception('Not implemented');
+        throw new Exception('Not implemented');
     }
 
     /**
@@ -107,7 +103,6 @@ class HubControlService implements HubAPI
     {
         $subsystemVersionsMap = [];
         foreach ($this->subsystems as $subsystem) {
-            /** @var SubsystemModuleVersionPrototype[] $subsystemModuleVersions */
             $subsystemModuleVersions = $subsystem->getModuleVersions($moduleId);
             $subsystemVersion = $subsystem->getVersion();
             $availableVersions = [];
@@ -116,7 +111,7 @@ class HubControlService implements HubAPI
                     $availableVersions[] = $subsystemModuleVersion;
                 }
             }
-            $subsystemVersionsMap[$subsystem->getSubsystemID()] = $availableVersions;
+            $subsystemVersionsMap[$subsystem->getSubsystemId()] = $availableVersions;
         }
 
         return $subsystemVersionsMap;
@@ -134,63 +129,6 @@ class HubControlService implements HubAPI
         }
 
         return $modules;
-    }
-
-    /**
-     * Collects which versions of the module need to be installed for which subsystem.
-     *
-     * @param string $moduleId Module ID to check
-     * @param array $versionConstraintsMap Subsystem version constraints map
-     * @return SubsystemModuleVersionPrototype[]
-     * @throws SubsystemModuleVersionNotFoundException
-     * @throws SubsystemNonResponsiveException
-     */
-    protected function determineVersionsForInstallation(string $moduleId, array $versionConstraintsMap): array
-    {
-        $subsystemModuleVersionsToInstall = [];
-        foreach ($this->subsystems as $subsystem) {
-            $subsystemID = $subsystem->getSubsystemID();
-            if (!isset($versionConstraintsMap[$subsystemID])) {
-                continue;
-            }
-
-            $versionConstraint = $versionConstraintsMap[$subsystemID];
-
-            /** @var SubsystemModuleVersionPrototype[] $moduleVersions */
-            $moduleVersions = $subsystem->getModuleVersions($moduleId);
-
-            ArrayHelper::multisort($moduleVersions, 'version', SORT_DESC);
-
-            $matchedVersion = null;
-            foreach ($moduleVersions as $moduleVersion) {
-                if (VersionHelper::checkVersion($moduleVersion->version, $versionConstraint)) {
-                    $matchedVersion = $moduleVersion;
-                    break;
-                }
-            }
-
-            if (!$matchedVersion) {
-                throw new SubsystemModuleVersionNotFoundException($moduleId, $subsystemID);
-            }
-            $subsystemModuleVersionsToInstall[$subsystemID] = $matchedVersion;
-        }
-
-        return $subsystemModuleVersionsToInstall;
-    }
-
-    /**
-     * Installs module versions in respective subsystems.
-     *
-     * @param SubsystemModuleVersionPrototype[] $moduleVersions Module versions to install.
-     * Keys must contain subsystem ID, values contain specific module version instance to use.
-     * @return void
-     * @throws SubsystemNonResponsiveException
-     */
-    protected function installModuleVersions(array $moduleVersions): void
-    {
-        foreach ($moduleVersions as $subsystemID => $moduleVersion) {
-            $this->subsystems[$subsystemID]->installModule($moduleVersion->moduleId, $moduleVersion->version);
-        }
     }
 
     /**
@@ -220,5 +158,62 @@ class HubControlService implements HubAPI
         }
 
         return $systemModules;
+    }
+
+    /**
+     * Collects which versions of the module need to be installed for which subsystem.
+     *
+     * @param string $moduleId Module ID to check
+     * @param array $versionConstraintsMap Subsystem version constraints map
+     * @return SubsystemModuleVersion[]
+     * @throws SubsystemModuleVersionNotFoundException
+     * @throws SubsystemNonResponsiveException
+     */
+    protected function determineVersionsForInstallation(string $moduleId, array $versionConstraintsMap): array
+    {
+        $subsystemModuleVersionsToInstall = [];
+        foreach ($this->subsystems as $subsystem) {
+            $subsystemID = $subsystem->getSubsystemId();
+            if (!isset($versionConstraintsMap[$subsystemID])) {
+                continue;
+            }
+
+            $versionConstraint = $versionConstraintsMap[$subsystemID];
+
+            /** @var SubsystemModuleVersion[] $moduleVersions */
+            $moduleVersions = $subsystem->getModuleVersions($moduleId);
+
+            ArrayHelper::multisort($moduleVersions, 'version', SORT_DESC);
+
+            $matchedVersion = null;
+            foreach ($moduleVersions as $moduleVersion) {
+                if (VersionHelper::checkVersion($moduleVersion->version, $versionConstraint)) {
+                    $matchedVersion = $moduleVersion;
+                    break;
+                }
+            }
+
+            if (!$matchedVersion) {
+                throw new SubsystemModuleVersionNotFoundException($moduleId, $subsystemID);
+            }
+            $subsystemModuleVersionsToInstall[$subsystemID] = $matchedVersion;
+        }
+
+        return $subsystemModuleVersionsToInstall;
+    }
+
+    /**
+     * Installs module versions in respective subsystems.
+     *
+     * @param SubsystemModuleVersion[] $moduleVersions Module versions to install.
+     * Keys must contain subsystem ID, values contain specific module version instance to use.
+     * @return void
+     * @throws SubsystemNonResponsiveException
+     */
+    protected function installModuleVersions(array $moduleVersions): void
+    {
+        foreach ($moduleVersions as $subsystemID => $moduleVersion) {
+            $this->subsystems[$subsystemID]->installModule($moduleVersion->moduleId, $moduleVersion->version);
+        }
     }
 }
