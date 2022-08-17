@@ -5,12 +5,14 @@
     "license": "UNLICENSED",
     "require": {
         "php": ">=8.1.0",
+        "ext-curl": "*",
         "yiisoft/yii2": "~2.0.14",
         "yiisoft/yii2-bootstrap4": "~2.0.0",
         "yiisoft/yii2-swiftmailer": "~2.0.0 || ~2.1.0",
         "phar-io/version": "^3.2",
-        "ext-curl": "*",
-        "yiisoft/yii2-redis": "^2.0"
+        "yiisoft/yii2-redis": "^2.0",
+        "firebase/php-jwt": "^6.3",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

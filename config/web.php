@@ -7,7 +7,9 @@ $config = array_merge_recursive($config, [
     'id' => 'basic',
     'components' => [
         'request' => [
-            'cookieValidationKey' => 'GccIwQjmlvi0YkTvqMve8BLPlwTBn9Ve',
+            'enableCsrfCookie' => false,
+            'enableCsrfValidation' => false,
+            'enableCookieValidation' => false,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -15,6 +17,12 @@ $config = array_merge_recursive($config, [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+        ],
+        'user' => [
+            'identityClass' => 'app\modules\auth\services\UserIdentity',
+            'enableSession' => false,
+            'enableAutoLogin' => false,
+            'loginUrl' => null,
         ],
     ],
 ]);
