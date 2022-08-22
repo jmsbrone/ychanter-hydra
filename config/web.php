@@ -10,6 +10,9 @@ $config = array_merge_recursive($config, [
             'enableCsrfCookie' => false,
             'enableCsrfValidation' => false,
             'enableCookieValidation' => false,
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
