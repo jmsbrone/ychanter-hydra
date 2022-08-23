@@ -11,6 +11,7 @@ use app\modules\auth\spi\LoginPswEntityRepositorySPI;
 use app\modules\auth\spi\SecuritySPI;
 use app\modules\auth\spi\UserRepositorySPI;
 use Exception;
+use yii\base\UserException;
 
 /**
  * Service for working with authentication and authorization of currently logged-in user.
@@ -65,7 +66,7 @@ class AuthService implements AuthServiceAPI
         $loginPswEntity = $this->getLoginEntity($login);
         if ($loginPswEntity === null
             || !$this->security->validatePassword($password, $loginPswEntity->passwordHash)) {
-            throw new Exception('Not authorized');
+            throw new UserException('Not authorized');
         }
 
         $payload = new JwtTokenPayload([
@@ -73,16 +74,6 @@ class AuthService implements AuthServiceAPI
         ]);
 
         return $this->jwtService->sign($payload);
-    }
-
-    /**
-     * Returns root user login entity.
-     *
-     * @return LoginPswEntity|null
-     */
-    protected function getRootLoginEntity(): ?LoginPswEntity
-    {
-        return $this->getLoginEntity(self::ROOT_USER_LOGIN);
     }
 
     /**
@@ -94,5 +85,15 @@ class AuthService implements AuthServiceAPI
     public function getLoginEntity(string $login): ?LoginPswEntity
     {
         return $this->loginPswEntityRepository->findOne(['login' => $login]);
+    }
+
+    /**
+     * Returns root user login entity.
+     *
+     * @return LoginPswEntity|null
+     */
+    protected function getRootLoginEntity(): ?LoginPswEntity
+    {
+        return $this->getLoginEntity(self::ROOT_USER_LOGIN);
     }
 }
