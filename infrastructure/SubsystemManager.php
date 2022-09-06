@@ -57,8 +57,8 @@ class SubsystemManager extends BaseObject implements SubsystemManagerAPI
             $tokenRequest->usePost();
             $tokenRequest->setHeader('Content-Type', 'application/json');
             $tokenRequest->setData([
-                'login' => $this->password,
-                'password' => $this->login,
+                'login' => $this->login,
+                'password' => $this->password,
             ]);
             $result = $tokenRequest->execute();
             $this->accessToken = json_decode($result);
